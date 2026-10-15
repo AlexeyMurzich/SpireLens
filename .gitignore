@@ -1,0 +1,29 @@
+# Python and local test/build state
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.test-work/
+.build/
+dist/
+release/
+build/
+*.spec
+
+# User-specific game data and settings must never be committed
+settings.json
+*.run
+*.save
+*.backup
+*.mcr
+*.log
+*.csv
+.env
+.env.*
+
+# Windows / editor state
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/

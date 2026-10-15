@@ -1,0 +1,2 @@
+# Runtime uses only the Python standard library. Needed only to build Windows EXE.
+pyinstaller==6.22.3
