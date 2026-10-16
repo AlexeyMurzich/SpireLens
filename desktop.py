@@ -22,8 +22,9 @@ ROOMS = {'ancient':'Древний', 'monster':'Бой', 'elite':'Элита', '
          'rest_site':'Костёр', 'shop':'Магазин', 'treasure':'Сокровище', 'unknown':'Событие', 'event':'Событие'}
 
 
-def config_path(folder=None):
-    default = Path.home() / 'Library/Application Support' if sys.platform == 'darwin' else Path(os.environ.get('LOCALAPPDATA', Path.home()))
+def config_path(folder=None, platform=sys.platform, environ=os.environ, home=None):
+    home = Path(home or Path.home())
+    default = home / 'Library/Application Support' if platform == 'darwin' else Path(environ.get('LOCALAPPDATA', home))
     return Path(folder or default / 'SpireLens') / 'settings.json'
 
 

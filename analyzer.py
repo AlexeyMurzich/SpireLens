@@ -11,10 +11,15 @@ import sys
 import threading
 import time
 
-if sys.platform == 'darwin':
-    DEFAULT_ROOT = Path.home() / 'Library/Application Support/SlayTheSpire2'
-else:
-    DEFAULT_ROOT = Path(os.environ.get('APPDATA', Path.home() / 'AppData/Roaming')) / 'SlayTheSpire2'
+
+def default_root(platform=sys.platform, environ=os.environ, home=None):
+    home = Path(home or Path.home())
+    if platform == 'darwin':
+        return home / 'Library/Application Support/SlayTheSpire2'
+    return Path(environ.get('APPDATA', home / 'AppData/Roaming')) / 'SlayTheSpire2'
+
+
+DEFAULT_ROOT = default_root()
 # The macOS build ships the pack inside the app bundle under a different file name.
 PCK_PATHS = ('steamapps/common/Slay the Spire 2/SlayTheSpire2.pck',
              'steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/Slay the Spire 2.pck')
@@ -124,16 +129,22 @@ def read_names(pck):
     return result
 
 
-def find_pck():
-    bases = [Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam',
-             Path.home() / 'Library/Application Support/Steam']
-    if os.name == 'nt':
-        try:
-            import winreg
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam') as key:
-                bases.append(Path(winreg.QueryValueEx(key, 'SteamPath')[0]))
-        except OSError:
-            pass
+def registry_steam_path():
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam') as key:
+            return Path(winreg.QueryValueEx(key, 'SteamPath')[0])
+    except (OSError, ImportError):
+        return None
+
+
+def find_pck(platform=sys.platform, environ=os.environ, home=None):
+    if platform == 'darwin':
+        bases = [Path(home or Path.home()) / 'Library/Application Support/Steam']
+    else:
+        bases = [Path(environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam']
+    if platform == 'win32' and (registry := registry_steam_path()):
+        bases.append(registry)
     for steam_root in list(bases):
         try:
             vdf = steam_root / 'steamapps/libraryfolders.vdf'
