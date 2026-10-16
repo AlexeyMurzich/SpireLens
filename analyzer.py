@@ -7,10 +7,22 @@ import os
 from pathlib import Path
 import re
 import struct
+import sys
 import threading
 import time
 
-DEFAULT_ROOT = Path(os.environ.get('APPDATA', Path.home() / 'AppData/Roaming')) / 'SlayTheSpire2'
+
+def default_root(platform=sys.platform, environ=os.environ, home=None):
+    home = Path(home or Path.home())
+    if platform == 'darwin':
+        return home / 'Library/Application Support/SlayTheSpire2'
+    return Path(environ.get('APPDATA', home / 'AppData/Roaming')) / 'SlayTheSpire2'
+
+
+DEFAULT_ROOT = default_root()
+# The macOS build ships the pack inside the app bundle under a different file name.
+PCK_PATHS = ('steamapps/common/Slay the Spire 2/SlayTheSpire2.pck',
+             'steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/Slay the Spire 2.pck')
 
 
 def number(value, default=0):
@@ -117,22 +129,29 @@ def read_names(pck):
     return result
 
 
-def find_pck():
-    bases = [Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam']
-    if os.name == 'nt':
-        try:
-            import winreg
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam') as key:
-                bases.append(Path(winreg.QueryValueEx(key, 'SteamPath')[0]))
-        except OSError:
-            pass
+def registry_steam_path():
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam') as key:
+            return Path(winreg.QueryValueEx(key, 'SteamPath')[0])
+    except (OSError, ImportError):
+        return None
+
+
+def find_pck(platform=sys.platform, environ=os.environ, home=None):
+    if platform == 'darwin':
+        bases = [Path(home or Path.home()) / 'Library/Application Support/Steam']
+    else:
+        bases = [Path(environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam']
+    if platform == 'win32' and (registry := registry_steam_path()):
+        bases.append(registry)
     for steam_root in list(bases):
         try:
             vdf = steam_root / 'steamapps/libraryfolders.vdf'
             bases += [Path(p.replace('\\\\', '\\')) for p in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding='utf-8'))]
         except OSError:
             pass
-    return next((p for b in bases if (p := b / 'steamapps/common/Slay the Spire 2/SlayTheSpire2.pck').is_file()), None)
+    return next((p for b in bases for name in PCK_PATHS if (p := b / name).is_file()), None)
 
 
 class Store:
