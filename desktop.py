@@ -23,7 +23,8 @@ ROOMS = {'ancient':'Древний', 'monster':'Бой', 'elite':'Элита', '
 
 
 def config_path(folder=None):
-    return Path(folder or Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'SpireLens') / 'settings.json'
+    default = Path.home() / 'Library/Application Support' if sys.platform == 'darwin' else Path(os.environ.get('LOCALAPPDATA', Path.home()))
+    return Path(folder or default / 'SpireLens') / 'settings.json'
 
 
 def load_config(path):

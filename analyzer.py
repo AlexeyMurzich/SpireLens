@@ -7,10 +7,17 @@ import os
 from pathlib import Path
 import re
 import struct
+import sys
 import threading
 import time
 
-DEFAULT_ROOT = Path(os.environ.get('APPDATA', Path.home() / 'AppData/Roaming')) / 'SlayTheSpire2'
+if sys.platform == 'darwin':
+    DEFAULT_ROOT = Path.home() / 'Library/Application Support/SlayTheSpire2'
+else:
+    DEFAULT_ROOT = Path(os.environ.get('APPDATA', Path.home() / 'AppData/Roaming')) / 'SlayTheSpire2'
+# The macOS build ships the pack inside the app bundle under a different file name.
+PCK_PATHS = ('steamapps/common/Slay the Spire 2/SlayTheSpire2.pck',
+             'steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/Slay the Spire 2.pck')
 
 
 def number(value, default=0):
@@ -118,7 +125,8 @@ def read_names(pck):
 
 
 def find_pck():
-    bases = [Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam']
+    bases = [Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Steam',
+             Path.home() / 'Library/Application Support/Steam']
     if os.name == 'nt':
         try:
             import winreg
@@ -132,7 +140,7 @@ def find_pck():
             bases += [Path(p.replace('\\\\', '\\')) for p in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding='utf-8'))]
         except OSError:
             pass
-    return next((p for b in bases if (p := b / 'steamapps/common/Slay the Spire 2/SlayTheSpire2.pck').is_file()), None)
+    return next((p for b in bases for name in PCK_PATHS if (p := b / name).is_file()), None)
 
 
 class Store:
