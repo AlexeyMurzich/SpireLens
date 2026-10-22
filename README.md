@@ -10,11 +10,30 @@
 
 Установите Windows-версию через Setup.exe, затем откройте SpireLens из меню «Пуск». Переносная версия: распакуйте ZIP целиком и запустите SpireLens.exe.
 
-Запуск исходников требует Python 3.10+ с Tkinter: `python desktop.py` или **Start.cmd**.
+Запуск исходников требует Python 3.10+ с Tkinter: `python desktop.py` или **Start.cmd**. На macOS — см. раздел «Запуск на macOS (из исходников)».
 
 Сборка: используйте Windows x64 Python 3.12+ с Tkinter, установите зависимости командой `python -m pip install -r requirements-build.txt` и установите Inno Setup 6. Затем выполните `.\build-windows.ps1 -Python <python.exe> -InnoCompiler <ISCC.exe>`. Скрипт создаёт EXE в `dist/SpireLens/`, установщик и ZIP в `release/`. Сборка проверена с Python 3.12.14, PyInstaller 6.22.3 и Inno Setup 6.7.3.
 
 Все вычисления выполняет Python внутри EXE; нативное окно построено на Tkinter. Оконная версия не запускает браузер и не открывает сетевой порт. Прежняя браузерная версия запускается отдельно через `python app.py` и слушает только 127.0.0.1. Данные не отправляются в интернет, сохранения не изменяются. Сервис автоматически перечитывает историю каждые 15 секунд; интерфейс обновляется, когда не открыт подробный разбор или поиск.
+
+## Запуск на macOS (из исходников)
+
+Установщик `Setup.exe` и переносной ZIP предназначены только для Windows. Готового приложения для macOS нет: на Mac SpireLens запускается из исходников.
+
+1. Нужен Python 3.10+ с рабочим Tkinter (Tk 8.6 или новее). Системный `/usr/bin/python3` обычно слишком старый (Python 3.9 и Tk 8.5) и не подходит. Подойдёт Python с [python.org](https://www.python.org/downloads/macos/), Homebrew (`brew install python-tk@3.12`, затем запуск через `python3.12`) или [uv](https://docs.astral.sh/uv/). Проверка: `python3 -c "import tkinter; print(tkinter.TkVersion)"`.
+2. В папке репозитория выполните `python3 desktop.py` (или `uv run --python 3.12 desktop.py`). Сторонние библиотеки не нужны.
+
+Пути по умолчанию на macOS:
+
+- История: `~/Library/Application Support/SlayTheSpire2/steam/<SteamID>/profileN/saves/history/*.run`.
+- Русские названия: `~/Library/Application Support/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/Slay the Spire 2.pck`. Дополнительные библиотеки Steam читаются из `~/Library/Application Support/Steam/steamapps/libraryfolders.vdf`.
+- Настройки: `~/Library/Application Support/SpireLens/settings.json`. Другую папку настроек задаёт `--config-dir`.
+
+Если история или названия не найдены, нажмите «Папка сохранений» и выберите `SlayTheSpire2`, папку Steam-профиля или `history`. Для названий нажмите «Файл игры / названия» и выберите `.pck`: он лежит внутри пакета приложения, поэтому в окне выбора нажмите ⌘⇧G и вставьте путь к папке `SlayTheSpire2.app/Contents/Resources`. Выбор сохраняется в настройках. Пути можно указать и при запуске:
+
+```text
+python3 desktop.py --data-dir "$HOME/Library/Application Support/SlayTheSpire2" --pck "/путь/к/Slay the Spire 2.pck"
+```
 
 ## Что доступно
 
